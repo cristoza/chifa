@@ -1,0 +1,95 @@
+<style>
+    /* Estilos encapsulados para no romper la web */
+    #chifa-wrapper { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    
+    #chifa-burbuja {
+        position: fixed; bottom: 20px; right: 20px;
+        width: 60px; height: 60px; background-color: #d32f2f;
+        border-radius: 50%; color: white; display: flex;
+        justify-content: center; align-items: center;
+        font-size: 30px; cursor: pointer; z-index: 999999;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        border: 2px solid #ffca28; transition: all 0.3s ease;
+    }
+    #chifa-burbuja:hover { transform: scale(1.1) rotate(10deg); }
+
+    #chifa-ventana {
+        display: none; position: fixed; bottom: 90px; right: 20px;
+        width: 320px; height: 450px; background: white;
+        border: 2px solid #d32f2f; border-radius: 12px;
+        flex-direction: column; z-index: 999999;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.2); overflow: hidden;
+    }
+
+    #chifa-header { background: #d32f2f; color: white; padding: 12px; font-weight: bold; text-align: center; font-size: 16px; }
+    
+    #chifa-mensajes { 
+        flex: 1; padding: 15px; overflow-y: auto; 
+        background: #fff9f0; display: flex; flex-direction: column; gap: 10px;
+    }
+
+    .msg-chifa { padding: 8px 12px; border-radius: 8px; font-size: 14px; max-width: 80%; word-wrap: break-word; }
+    .user-msg-chifa { background: #d1eaff; align-self: flex-end; color: #0d47a1; border-bottom-right-radius: 2px; }
+    .bot-msg-chifa { background: #ffffff; align-self: flex-start; color: #333; border: 1px solid #eee; border-bottom-left-radius: 2px; }
+
+    #chifa-input-area { display: flex; padding: 10px; background: #eee; gap: 5px; }
+    #chifa-input { flex: 1; border: 1px solid #ccc; padding: 8px; border-radius: 4px; outline: none; }
+    #chifa-btn { background: #d32f2f; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    #chifa-btn:hover { background: #b71c1c; }
+</style>
+
+<div id="chifa-wrapper">
+    <div id="chifa-ventana">
+        <div id="chifa-header">🏮 CHIFA LEE BOT🥢</div>
+        <div id="chifa-mensajes">
+            <div class="msg-chifa bot-msg-chifa">¡Hola! Soy el asistente del Chifa. Prueba preguntando por el "chaufa" o "precios".</div>
+        </div>
+        <div id="chifa-input-area">
+            <input type="text" id="chifa-input" placeholder="Escribe un mensaje...">
+            <button id="chifa-btn">Enviar</button>
+        </div>
+    </div>
+    <div id="chifa-burbuja" onclick="toggleChifa()">🥡</div>
+</div>
+
+<script>
+    function toggleChifa() {
+        const v = document.getElementById('chifa-ventana');
+        v.style.display = (v.style.display === 'flex') ? 'none' : 'flex';
+        if(v.style.display === 'flex') document.getElementById('chifa-input').focus();
+    }
+
+    async function hablarConBot() {
+        const input = document.getElementById('chifa-input');
+        const mDiv = document.getElementById('chifa-mensajes');
+        const msg = input.value.trim();
+        
+        if(!msg) return;
+
+        // Mostrar mensaje usuario
+        mDiv.innerHTML += `<div class="msg-chifa user-msg-chifa">${msg}</div>`;
+        input.value = '';
+        mDiv.scrollTop = mDiv.scrollHeight;
+
+        try {
+            const res = await fetch('http://127.0.0.1:5000/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ message: msg })
+            });
+            const data = await res.json();
+            
+            // Efecto de espera (simula escritura)
+            setTimeout(() => {
+                mDiv.innerHTML += `<div class="msg-chifa bot-msg-chifa">${data.response}</div>`;
+                mDiv.scrollTop = mDiv.scrollHeight;
+            }, 500);
+
+        } catch (e) {
+            mDiv.innerHTML += `<div class="msg-chifa bot-msg-chifa" style="color:red">⚠️ Error: Servidor Python apagado.</div>`;
+        }
+    }
+
+    document.getElementById('chifa-btn').onclick = hablarConBot;
+    document.getElementById('chifa-input').onkeypress = (e) => { if(e.key === 'Enter') hablarConBot(); };
+</script>
